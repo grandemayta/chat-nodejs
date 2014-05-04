@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Node.js - Notifications</title>
+
+	<meta charset="utf-8" />
+
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.js"></script>	
+	<script type="text/javascript" src="http://localhost:6969/socket.io/socket.io.js"></script>
+
+	<script type="text/javascript">
+
+ 	$(document).on('ready', pageLoad);
+
+ 	function pageLoad(){
+ 		
+ 		var websocket = io.connect("http://localhost:6969");
+ 		websocket.on("userDataFromServer", userDataFromServer);
+		websocket.on("userMessageFromServer", userMessageFromServer);
+		var username = "";
+
+ 		$("#enterChat").on('submit', function(){
+
+ 			username = $("#txtName").val();
+ 			websocket.emit("newUser", username);
+ 			$(".enter").hide();
+
+ 			return false;
+ 		});
+
+ 		$("#chatForm").on('submit', function(){    	
+
+	    	var messageToSend = JSON.stringify({
+	    		username: username, 
+	    		message: $("#txtMessage").val()
+	    	});
+
+			websocket.emit("newUserMessage", messageToSend);
+			$("#txtMessage").val("");
+
+	    	return false;
+	    });
+ 	}
+
+ 	function userDataFromServer(data){
+ 		$(".notification").hide();
+
+ 		$(".users").append("<p>" + data + "</p>"); 		
+
+ 		$(".notification").show(400).html("<p>" +  data + " è adesso online!</p>");
+
+ 		setTimeout(function() { $(".notification").hide(400); }, 4000);
+ 	}
+
+	function userMessageFromServer(data)
+	{
+		var userData = JSON.parse(data);
+		var chatMessage = "<div class=\"userMessage\">"
+		                  + "<b>" + userData.username + "</b>"
+		                  + "<p>" + userData.message + "</p></div>";
+
+		$(".messages").append(chatMessage);
+		console.log(data);
+	}
+	</script>
+
+</head>
+<body>
+
+<section class="enter">
+	<div class="enterChatBox">
+		<form id="enterChat">		
+			<h2>Welcome to NedChat</h2>
+			<input id="txtName" type="text" placeholder="type your name..." required/>
+			<input type="submit" value="Enter"/>	
+		</form>
+	</div>
+</section>
+
+<section class="chat">
+	<form id="chatForm">
+		<div class="users">			
+		</div>
+		<div class="messages">
+		</div>
+		<input id="txtMessage" type="text" placeholder="your message..." required/>
+		<input type="submit" value="Send Message"/>
+	</form>
+</section>
+
+<section>	
+	<div class="notification">
+	</div>
+</section>
+
+</body>
+</html>
